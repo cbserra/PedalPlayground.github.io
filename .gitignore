@@ -18,3 +18,4 @@ app/images/desktop.ini
 app/images/pedals/desktop.ini
 app/images/pedals/desktop.ini
 *.ini
+.vscode/*
