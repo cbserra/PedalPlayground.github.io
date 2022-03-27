@@ -1,5 +1,8 @@
 var pedalImagePath = "public/images/pedals/";
 var pedalboardImagePath = "public/images/pedalboards/";
+var displayUnits = "in."
+var displayUnitsBtn = $('#prefer-unit :input[value="' + displayUnits + '"]');
+
 
 $(document).ready(function () {
 	// Populate Pedalboards and Pedals lists
@@ -35,6 +38,11 @@ $(document).ready(function () {
 			var savedPedalCanvas = JSON.parse(localStorage["pedalCanvas"]);
 			$(".canvas").html(savedPedalCanvas);
 			readyCanvas();
+		}
+
+		// Load preferred display units from localStorage if present
+		if (localStorage["displayUnits"] != null && localStorage["displayUnits"] !== displayUnits) {
+			updatePageDisplayUnit(localStorage["displayUnits"]);
 		}
 
 		// If hidden multiplier value doesn't exist, create it
@@ -218,7 +226,7 @@ $(document).ready(function () {
 		var height = $("#add-custom-pedal .custom-height").val();
 		var scaledWidth = width * multiplier;
 		var scaledHeight = height * multiplier;
-		var dims = width + '" x ' + height + '"';
+		var dims = getDisplayUnit(width) + " " + displayUnits + '" x ' + getDisplayUnit(height) + " " + displayUnits + '"';
 		var name = $("#add-custom-pedal .custom-name").val();
 		var image = $("#add-custom-pedal .custom-color").val();
 		var pedal =
@@ -419,6 +427,19 @@ $(document).ready(function () {
 			savePedalCanvas();
 		}
 	});
+
+	$("#prefer-unit").on("click", "div.btn-group .btn", function (event) {
+		const eventButton = event.target;
+		if (eventButton == displayUnitsBtn) {
+			return;
+		}
+
+		updateLocalStorageDisplayUnit(eventButton.value)
+		updatePageDisplayUnit(eventButton.value);
+		updateDisplayButtonStates(eventButton);
+		
+		event.preventDefault();
+	});
 }); // End Document ready
 
 function readyCanvas(pedal) {
@@ -508,6 +529,32 @@ function deleteSelected() {
 	$(".canvas .selected").remove();
 	$(".canvas .panel").remove();
 	savePedalCanvas();
+}
+
+function updateLocalStorageDisplayUnit(unit) {
+	localStorage["displayUnits"] = unit;
+}
+
+function updatePageDisplayUnit(unit) {
+	displayUnits = unit;
+}
+
+function getDisplayUnit(value) {
+	if (displayUnits !== 'in.') {
+		return inchesToMillis(value);
+	}
+
+	return value;
+}
+
+function inchesToMillis(value) {
+	return Math.round(value * 25.4 * 100) / 100;
+}
+
+function updateDisplayButtonStates(eventButton) {
+	displayUnitsBtn.removeClass("active");
+	displayUnitsBtn = eventButton;
+	eventButton.addClass("active")
 }
 
 // function rotatePedal() {
@@ -723,8 +770,8 @@ $("body").on("click", ".item", function (e) {
 	var pedal = $(this);
 	var id = $(this).attr("id");
 	var pedalName = $(this).attr("title");
-	var width = $(this).attr("data-width");
-	var height = $(this).attr("data-height");
+	var width = getDisplayUnit($(this).attr("data-width"));
+	var height = getDisplayUnit($(this).attr("data-height"));
 	var markup =
 		'<div class="panel" data-id="#' +
 		id +
@@ -733,8 +780,12 @@ $("body").on("click", ".item", function (e) {
 		pedalName +
 		'<br><span class="panel__dimensions">(' +
 		width +
+		" " + 
+		displayUnits + 
 		" x " +
 		height +
+		" " + 
+		displayUnits + 
 		')</span>\
     </div>\
 		<a href="#rotate" class="panel__action">Rotate <i>R</i></a>\
